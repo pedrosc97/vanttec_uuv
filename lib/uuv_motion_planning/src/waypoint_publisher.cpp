@@ -37,7 +37,7 @@ void WaypointPublisher::WaypointSelection()
         switch((int) this->trajectory_selector)
         {
             case 0:
-                this->waypoints = uuv_common::GenerateCircle(this->circle_radius, 2, 5, 2);
+                this->waypoints = uuv_common::GenerateCircle(this->circle_radius, 1.2, 2.7, 0);
                 this->waypoints.guidance_law = 1;
                 break;
             case 1:
@@ -46,10 +46,10 @@ void WaypointPublisher::WaypointSelection()
                 break; 
             case 2:
                 this->waypoints.guidance_law = 1;
-                this->waypoints.waypoint_list_length = 10;
-                this->waypoints.waypoint_list_x = {0,4,5,3,5,2,-3,-5,-2,0};
-                this->waypoints.waypoint_list_y = {0,4,2,-1,-3,-4,-3,0,4,0};
-                this->waypoints.waypoint_list_z = {0,2,0,-1,2,3,0.3,0.7,-1.4,0};
+                this->waypoints.waypoint_list_length = 2;
+                this->waypoints.waypoint_list_x = {0,1};
+                this->waypoints.waypoint_list_y = {0,2};
+                this->waypoints.waypoint_list_z = {0,0};
                 break;
             default:
                 break;
