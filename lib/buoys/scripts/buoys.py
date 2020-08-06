@@ -114,6 +114,11 @@ class AutoNav:
                 self.ned_alpha = (self.ned_alpha/abs(self.ned_alpha))*(abs(self.ned_alpha) - 2*math.pi)
                     
             xm1, ym1 = self.gate_to_body(0,0,alpha1,self.x_farther+x1,self.y_farther+y1)
+            rospy.logwarn("transport first buoy")
+            rospy.logwarn(xm1)
+            rospy.logwarn(ym1- self.radius  )
+            rospy.logwarn(self.x_farther+x1)
+            rospy.logwarn(self.y_farther+y1)
             self.waypoints_first_buoy = [self.x_farther+x1,self.y_farther+y1,xm1,ym1]
 
             #Calculate distance away from second buoy
@@ -135,7 +140,7 @@ class AutoNav:
             self.waypoints.guidance_law = 1
             self.waypoints.waypoint_list_length = 2
             self.waypoints.waypoint_list_x = [x1, xm1]
-            self.waypoints.waypoint_list_y = [y1, ym1 - self.radius - self.long_sub]
+            self.waypoints.waypoint_list_y = [y1, ym1 - self.radius  ]
             self.waypoints.waypoint_list_z = [0,0]  
             self.activation = False 
             self.desired(self.waypoints)
@@ -152,10 +157,15 @@ class AutoNav:
             y2 = self.waypoints_second_buoy[1]
             xm2 = self.waypoints_second_buoy[2]
             ym2 = self.waypoints_second_buoy[3]
+            rospy.logwarn("transport_second_bouys")
+            rospy.logwarn(xm2)
+            rospy.logwarn(ym2+ self.radius   )
+            rospy.logwarn(x2)
+            rospy.logwarn(y2)
             self.waypoints.guidance_law = 1
             self.waypoints.waypoint_list_length = 2
             self.waypoints.waypoint_list_x = [x2, xm2]
-            self.waypoints.waypoint_list_y = [y2, ym2 + self.radius + self.long_sub]
+            self.waypoints.waypoint_list_y = [y2, ym2 + self.radius   ]
             self.waypoints.waypoint_list_z = [0,0]  
             self.activation = False 
             self.desired(self.waypoints)    
@@ -168,7 +178,7 @@ class AutoNav:
         @param: --
         @return: --
         '''
-        rospy.logwarn(self.y_farther)
+        rospy.logwarn("farther")
         rospy.logwarn(self.x_farther)
         alpha2 = math.atan2(self.y_farther,self.x_farther) + math.pi/2
         if (abs(alpha2) > (math.pi)):
@@ -267,7 +277,8 @@ class AutoNav:
             self.uuv_path.poses.append(pose)
         self.uuv_path_pub.publish(self.uuv_path)
     def generate_circle(self, _radius, _x_center, _y_center, _z_center):
-        if(self.activation == True):    
+        if(self.activation == True):   
+            rospy.logwarn("Generate circle")
             rospy.logwarn(_radius)
             rospy.logwarn(_x_center)
             rospy.logwarn(_y_center)
@@ -297,6 +308,7 @@ class AutoNav:
             self.activation = False
             self.desired(waypointsCircle)
     def turn(self, yaw):
+        rospy.logwarn("Turn")
         if(self.activation == True):
             self.x_farther += 1
             self.activation = False
@@ -304,6 +316,30 @@ class AutoNav:
             self.waypoints.heading_setpoint = yaw
             self.waypoints.depth_setpoint = 0
             self.desired(self.waypoints)
+    def touch(self, list):
+        '''
+        @name: transport_second_bouys
+        @brief: Transport to second buoy
+        @param: --
+        @return: --
+        ''' 
+        if(self.activation == True):
+            x2 = list[0]
+            y2 = list[1]
+            xm2 = list[2]
+            ym2 = list[3]
+            rospy.logwarn("touch_bouy")
+            rospy.logwarn(xm2)
+            rospy.logwarn(ym2)
+            rospy.logwarn(x2)
+            rospy.logwarn(y2)
+            self.waypoints.guidance_law = 1
+            self.waypoints.waypoint_list_length = 2
+            self.waypoints.waypoint_list_x = [x2, xm2]
+            self.waypoints.waypoint_list_y = [y2, ym2 ]
+            self.waypoints.waypoint_list_z = [0,0]  
+            self.activation = False 
+            self.desired(self.waypoints)         
 
 def main():
     rospy.init_node("buoys", anonymous=False)
@@ -311,6 +347,7 @@ def main():
     autoNav = AutoNav()
     last_detection = []
     selection = 0
+    counter = 4
     while not rospy.is_shutdown() and autoNav.activated:
         if selection  == 0:
             autoNav.activation = True
@@ -327,7 +364,7 @@ def main():
             autoNav.farther()
             rospy.sleep(6.)
             selection = 0
-            if(autoNav.x_farther == 4):
+            if(autoNav.x_farther == counter):
                 selection = 3
         elif selection  == 3:
             autoNav.activation = True
@@ -337,18 +374,30 @@ def main():
         elif selection  == 4:
             autoNav.activation = True
             autoNav.generate_circle(autoNav.radius, autoNav.waypoints_first_buoy[2], autoNav.waypoints_first_buoy[3], 0)
-            rospy.sleep(6.)
+            rospy.sleep(12.)
             selection = 5
         elif selection  == 5:
             autoNav.activation = True
-            autoNav.transport_second_bouys()
-            rospy.sleep(6.)
+            autoNav.touch(autoNav.waypoints_first_buoy)
+            rospy.sleep(8.)
             selection = 6
         elif selection  == 6:
             autoNav.activation = True
-            autoNav.generate_circle(autoNav.radius, autoNav.waypoints_second_buoy[2], autoNav.waypoints_second_buoy[3], 0)
+            autoNav.transport_second_bouys()
             rospy.sleep(6.)
-            selection = 0
+            selection = 7
+        elif selection  == 7:
+            autoNav.activation = True
+            autoNav.generate_circle(autoNav.radius, autoNav.waypoints_second_buoy[2], autoNav.waypoints_second_buoy[3], 0)
+            rospy.sleep(12.)
+            selection = 8
+        elif selection  == 8:
+            autoNav.activation = True
+            autoNav.touch(autoNav.waypoints_second_buoy)
+            rospy.sleep(8.)
+            counter += 4
+            autoNav.x_farther += 4
+            selection = 2
         rate.sleep()
     rospy.spin()
 
